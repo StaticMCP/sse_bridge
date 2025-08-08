@@ -1,0 +1,20 @@
+[package]
+name = "staticmcp_sse_lib"
+description = "Shared library for StaticMCP's SSE bridge"
+version = "0.0.1"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/StaticMCP/sse_bridge"
+
+[lib]
+name = "staticmcp_sse_lib"
+path = "src/lib.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+base64 = "0.22"
+async-trait = "0.1"
+anyhow = "1.0"

@@ -1,0 +1,21 @@
+[package]
+name = "staticmcp_sse_fixed"
+description = "A SSE bridge that enables MCP clients to connect to a specific set of StaticMCP files over HTTP."
+version = "0.0.1"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/StaticMCP/sse_bridge"
+
+[[bin]]
+name = "staticmcp_sse_fixed"
+path = "src/main.rs"
+
+[dependencies]
+staticmcp_sse_lib = { path = "../staticmcp_sse_lib" }
+tokio = { version = "1", features = ["full"] }
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors"] }
+serde_json = "1.0"
+futures = "0.3"
+anyhow = "1.0"
+async-stream = "0.3"
