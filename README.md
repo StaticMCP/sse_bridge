@@ -63,7 +63,10 @@ npx @modelcontextprotocol/inspector "http://localhost:3000/sse"
 ### API Endpoints
 
 - **`GET /`** - Bridge information and usage examples
-- **`POST /sse?url={target_url}`** - (dynamic-only) SSE message posting endpoint
+- **`POST /sse?url={target_url}`** - SSE message posting endpoint 
+- **`GET /events?url={target_url}`** - text/event-stream
+
+_`?url={target_url}` suffix is only needed for dynamic version._
 
 ## How It Works
 

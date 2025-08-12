@@ -1,9 +1,12 @@
+use axum::response::sse::Event;
 use axum::{
     Json, Router,
     extract::Query,
     http::StatusCode,
+    response::Sse,
     routing::{get, post},
 };
+use futures::stream;
 use serde::Deserialize;
 use serde_json::json;
 use staticmcp_sse_lib::{MCPRequest, create_remote_bridge};
@@ -43,6 +46,20 @@ async fn mcp_sse_endpoint(
     }
 }
 
+async fn sse_endpoint(
+    Query(_params): Query<RemoteParams>,
+) -> Sse<impl futures::Stream<Item = Result<Event, axum::Error>>> {
+    let stream = stream::iter(vec![
+        Ok(Event::default().data("Hello SSE")),
+        Ok(Event::default().data("Connection established")),
+        Ok(Event::default()
+            .event("ready")
+            .data(r#"{"jsonrpc":"2.0","method":"ready"}"#)),
+    ]);
+
+    Sse::new(stream)
+}
+
 async fn info_endpoint() -> Json<serde_json::Value> {
     Json(json!({
         "bridge": "SSE Static MCP Bridge (Generic Remote)",
@@ -52,6 +69,7 @@ async fn info_endpoint() -> Json<serde_json::Value> {
         "endpoints": {
             "info": "GET /",
             "mcp_sse": "POST /sse?url={target_mcp_url}",
+            "mcp_sse_events": "GET /events?url={target_mcp_url}",
         },
         "usage": {
             "mcp_clients": "Point MCP client to: http://localhost:PORT/sse?url=TARGET_URL",
@@ -80,6 +98,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(info_endpoint))
         .route("/sse", post(mcp_sse_endpoint))
+        .route("/events", get(sse_endpoint))
         .layer(CorsLayer::permissive())
         .with_state(state);
 

@@ -1,7 +1,7 @@
 [package]
 name = "staticmcp_sse_fixed"
 description = "A SSE bridge that enables MCP clients to connect to a specific set of StaticMCP files over HTTP."
-version = "0.0.3"
+version = "0.0.4"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/StaticMCP/sse_bridge"

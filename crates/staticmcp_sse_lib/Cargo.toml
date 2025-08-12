@@ -1,7 +1,7 @@
 [package]
 name = "staticmcp_sse_lib"
 description = "Shared library for StaticMCP's SSE bridge"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/StaticMCP/sse_bridge"
@@ -18,3 +18,6 @@ reqwest = { version = "0.11", features = ["json"] }
 base64 = "0.22"
 async-trait = "0.1"
 anyhow = "1.0"
+axum = "0.7"
+async-stream = "0.3"
+futures = "0.3"

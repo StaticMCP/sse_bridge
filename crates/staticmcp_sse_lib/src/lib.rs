@@ -1,8 +1,11 @@
 use async_trait::async_trait;
+use axum::response::sse::Event;
+use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tokio::fs;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -263,6 +266,21 @@ impl MCPBridge {
         }
     }
 
+    pub fn create_sse_stream(_bridge: Arc<Self>) -> impl Stream<Item = Result<Event, axum::Error>> {
+        async_stream::stream! {
+            yield Ok(Event::default()
+                .event("message")
+                .data(r#"{"jsonrpc":"2.0","method":"ready","params":{}}"#));
+
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                yield Ok(Event::default()
+                    .event("ping")
+                    .data(""));
+            }
+        }
+    }
+
     fn handle_initialize(&self, id: Option<Value>) -> MCPResponse {
         if let Some(manifest) = &self.manifest {
             let capabilities = manifest
@@ -517,4 +535,11 @@ pub async fn create_bridge(source_path: String) -> anyhow::Result<MCPBridge> {
     } else {
         create_local_bridge(PathBuf::from(source_path)).await
     }
+}
+
+pub async fn create_sse_stream_for_url(
+    url: String,
+) -> anyhow::Result<impl Stream<Item = Result<Event, axum::Error>>> {
+    let bridge = create_remote_bridge(url).await?;
+    Ok(MCPBridge::create_sse_stream(Arc::new(bridge)))
 }

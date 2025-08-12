@@ -1,8 +1,11 @@
+use axum::response::sse::{Event, KeepAlive};
 use axum::{
     Json, Router,
     extract::State,
+    response::Sse,
     routing::{get, post},
 };
+use futures::stream::Stream;
 use serde_json::json;
 use staticmcp_sse_lib::{MCPBridge, MCPRequest, create_bridge};
 use std::sync::Arc;
@@ -17,6 +20,14 @@ async fn mcp_message_endpoint(
     eprintln!("📨 MCP Message received");
     let response = bridge.handle_request(request).await;
     Json(serde_json::to_value(response).unwrap_or_default())
+}
+
+async fn sse_endpoint(
+    State(bridge): State<AppState>,
+) -> Sse<impl Stream<Item = Result<Event, axum::Error>>> {
+    eprintln!("🌊 SSE connection requested");
+    let stream = MCPBridge::create_sse_stream(bridge);
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
 async fn info_endpoint(State(bridge): State<AppState>) -> Json<serde_json::Value> {
@@ -36,22 +47,14 @@ async fn info_endpoint(State(bridge): State<AppState>) -> Json<serde_json::Value
         "manifest": manifest_info,
         "endpoints": {
             "info": "GET /",
-            "mcp_sse": "GET /sse (standard MCP SSE connection)",
-            "mcp_message": "POST /message (standard MCP messages)",
-            "mcp_sse_message": "POST /sse (standard MCP SSE messages)",
-            "custom_mcp": "POST /mcp (custom JSON-RPC)",
-            "custom_sse": "POST /sse_custom (custom SSE with request body)"
+            "mcp_sse": "POST /sse",
+            "mcp_sse_events": "GET /events",
         },
         "usage": {
             "mcp_clients": "Point MCP client to: http://localhost:PORT/",
             "standard_endpoints": [
-                "GET /sse (for SSE connection)",
-                "POST /message (for messages)",
+                "GET / (for info)",
                 "POST /sse (for SSE messages)"
-            ],
-            "custom_endpoints": [
-                "POST /mcp (JSON-RPC)",
-                "POST /sse_custom (SSE with body)"
             ]
         }
     }))
@@ -95,6 +98,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(info_endpoint))
         .route("/sse", post(mcp_message_endpoint))
+        .route("/events", get(sse_endpoint))
         .layer(CorsLayer::permissive())
         .with_state(bridge);
 
