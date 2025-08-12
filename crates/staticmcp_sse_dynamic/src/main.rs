@@ -54,7 +54,7 @@ async fn info_endpoint() -> Json<serde_json::Value> {
             "mcp_sse": "POST /sse?url={target_mcp_url}",
         },
         "usage": {
-            "mcp_clients": "Point MCP client to: http://localhost:PORT/?url=TARGET_URL",
+            "mcp_clients": "Point MCP client to: http://localhost:PORT/sse?url=TARGET_URL",
             "standard_endpoints": [
                 "GET / (for info)",
                 "POST /sse?url=https://staticmcp.com/mcp (for SSE messages)"
@@ -86,8 +86,20 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     eprintln!("✅ Generic bridge ready!");
-    eprintln!("🔗 Point your MCP client to: http://localhost:{port}/?url=TARGET_URL");
-    eprintln!("🧪 Test: curl 'http://localhost:{port}/test?url=https://staticmcp.com/mcp'");
+    eprintln!("🔗 Point your MCP client to: http://localhost:{port}/sse?url=TARGET_URL");
+    eprintln!("🧪 Test:");
+    eprintln!("> curl -X POST 'http://localhost:{port}/sse?url=https://staticmcp.com/mcp' \\");
+    eprintln!("-H \"Content-Type: application/json\" \\");
+    eprintln!("-d '{{");
+    eprintln!("  \"jsonrpc\": \"2.0\",");
+    eprintln!("  \"id\": 1,");
+    eprintln!("  \"method\": \"initialize\",");
+    eprintln!("  \"params\": {{");
+    eprintln!("    \"protocolVersion\": \"2025-06-18\",");
+    eprintln!("    \"capabilities\": {{}},");
+    eprintln!("    \"clientInfo\": {{\"name\": \"test\", \"version\": \"1.0\"}}");
+    eprintln!("  }}");
+    eprintln!("}}'");
 
     axum::serve(listener, app).await?;
 

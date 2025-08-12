@@ -264,21 +264,69 @@ impl MCPBridge {
     }
 
     fn handle_initialize(&self, id: Option<Value>) -> MCPResponse {
-        MCPResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: Some(json!({
-                "protocolVersion": "2024-11-05",
-                "capabilities": {
-                    "resources": {},
-                    "tools": {}
-                },
-                "serverInfo": {
-                    "name": "sse-static-mcp-bridge",
-                    "version": "1.0.0"
-                }
-            })),
-            error: None,
+        if let Some(manifest) = &self.manifest {
+            let capabilities = manifest
+                .capabilities
+                .as_ref()
+                .map(|caps| {
+                    let mut result = json!({});
+                    if let Some(resources) = &caps.resources {
+                        if !resources.is_empty() {
+                            result["resources"] = json!({"listChanged": true});
+                        }
+                    }
+                    if let Some(tools) = &caps.tools {
+                        if !tools.is_empty() {
+                            result["tools"] = json!({"listChanged": true});
+                        }
+                    }
+                    result
+                })
+                .unwrap_or_else(|| json!({}));
+
+            let server_info = manifest
+                .server_info
+                .as_ref()
+                .map(|info| {
+                    json!({
+                        "name": info.name,
+                        "version": info.version
+                    })
+                })
+                .unwrap_or_else(|| {
+                    json!({
+                        "name": "sse-static-mcp-bridge",
+                        "version": "1.0.0"
+                    })
+                });
+
+            MCPResponse {
+                jsonrpc: "2.0".to_string(),
+                id,
+                result: Some(json!({
+                    "protocolVersion": "2025-06-18",
+                    "capabilities": capabilities,
+                    "serverInfo": server_info
+                })),
+                error: None,
+            }
+        } else {
+            MCPResponse {
+                jsonrpc: "2.0".to_string(),
+                id,
+                result: Some(json!({
+                    "protocolVersion": "2025-06-18",
+                    "capabilities": {
+                        "resources": {},
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "sse-staticmcp-bridge",
+                        "version": "1.0.0"
+                    }
+                })),
+                error: None,
+            }
         }
     }
 
